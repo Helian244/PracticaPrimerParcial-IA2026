@@ -2,6 +2,7 @@ import tkinter as tk
 import time
 from collections import deque
 from PIL import Image, ImageTk
+import os
 
 filas = 10
 columnas = 10
@@ -23,11 +24,18 @@ laberinto = []
 def cargar_imagenes():
     global raton_img, queso_img
 
-    raton = Image.open("assets/raton.png").resize((tam, tam))
-    queso = Image.open("assets/queso.png").resize((tam, tam))
+    try:
+        assets_dir = os.path.join(os.path.dirname(__file__), "assets")
+        raton = Image.open(os.path.join(assets_dir, "raton.png")).resize((tam, tam))
+        queso = Image.open(os.path.join(assets_dir, "queso.png")).resize((tam, tam))
 
-    raton_img = ImageTk.PhotoImage(raton)
-    queso_img = ImageTk.PhotoImage(queso)
+        raton_img = ImageTk.PhotoImage(raton)
+        queso_img = ImageTk.PhotoImage(queso)
+    except FileNotFoundError as e:
+        print(f"Error loading images: {e}")
+        print("Make sure assets/raton.png and assets/queso.png exist.")
+        raton_img = None
+        queso_img = None
 
 laberintos = [
     [
@@ -110,8 +118,10 @@ def dibujar():
             color = color_camino if laberinto[i][j] == 0 else color_pared
             canvas.create_rectangle(j*tam, i*tam, (j+1)*tam, (i+1)*tam, fill=color, outline="")
 
-    canvas.create_image(meta[1]*tam, meta[0]*tam, anchor="nw", image=queso_img)
-    canvas.create_image(inicio[1]*tam, inicio[0]*tam, anchor="nw", image=raton_img)
+    if queso_img:
+        canvas.create_image(meta[1]*tam + tam//2, meta[0]*tam + tam//2, image=queso_img)
+    if raton_img:
+        canvas.create_image(inicio[1]*tam + tam//2, inicio[0]*tam + tam//2, image=raton_img)
 
 def limpiar():
     dibujar()
@@ -189,7 +199,7 @@ tk.Button(frame, text="bfs", command=lambda: ejecutar("bfs"), bg="#2ecc71").grid
 tk.Button(frame, text="dfs", command=lambda: ejecutar("dfs"), bg="#e74c3c").grid(row=2, column=3)
 tk.Button(frame, text="limpiar", command=limpiar, bg="#f1c40f").grid(row=2, column=4)
 
-# inicio
+# Load images safely at startup
 cargar_imagenes()
 
 root.mainloop()
